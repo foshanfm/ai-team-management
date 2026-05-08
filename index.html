@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI-Assisted Team Management</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;1,8..60,300&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ===========================================
+       RESET & BASE
+       =========================================== */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Source Serif 4', Georgia, serif;
+      background: #faf9f7;
+      color: #1a1a1a;
+      line-height: 1.65;
+    }
+
+    /* ===========================================
+       SLIDES — each is 100vh, stacked vertically
+       =========================================== */
+    .slide {
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: clamp(2rem, 5vw, 5rem) clamp(2rem, 8vw, 10rem);
+      position: relative;
+    }
+
+    .slide-content {
+      max-width: 960px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* ===========================================
+       FIXED UI
+       =========================================== */
+    .lang-switch {
+      position: fixed;
+      top: 20px;
+      right: 24px;
+      z-index: 100;
+      display: flex;
+      gap: 4px;
+      background: #fff;
+      border: 1px solid #e0d8d0;
+      border-radius: 50px;
+      padding: 4px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    .lang-btn {
+      background: transparent;
+      border: none;
+      padding: 6px 16px;
+      border-radius: 50px;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: #5a524a;
+      transition: all 0.25s;
+    }
+    .lang-btn.active { background: #c41e3a; color: #fff; }
+    .lang-btn:hover:not(.active) { color: #1a1a1a; background: #f5e6d3; }
+
+    /* Progress bar */
+    .progress-bar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #c41e3a, #8b5e3c);
+      z-index: 101;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    /* Nav dots */
+    .nav-dots {
+      position: fixed;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .nav-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #e0d8d0;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s;
+      padding: 0;
+    }
+    .nav-dot.active { background: #c41e3a; transform: scale(1.5); }
+    .nav-dot:hover:not(.active) { background: #8b5e3c; }
+
+    /* Keyboard hint */
+    .keyboard-hint {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      color: #5a524a;
+      opacity: 0.5;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    kbd {
+      background: #fff;
+      border: 1px solid #e0d8d0;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-family: monospace;
+      font-size: 11px;
+    }
+
+    /* ===========================================
+       TYPOGRAPHY
+       =========================================== */
+    h1 {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-weight: 700;
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      line-height: 1.08;
+      letter-spacing: -0.02em;
+    }
+    h2 {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-weight: 700;
+      font-size: clamp(1.8rem, 4vw, 3.2rem);
+      line-height: 1.12;
+      margin-bottom: clamp(1rem, 2.5vw, 2rem);
+    }
+    h3 {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-weight: 600;
+      font-size: clamp(1.1rem, 2.5vw, 1.6rem);
+      line-height: 1.3;
+      margin-bottom: 0.5em;
+    }
+    p, li {
+      font-size: clamp(0.9rem, 1.8vw, 1.15rem);
+      color: #5a524a;
+    }
+    li { margin-bottom: 0.4em; }
+
+    /* ===========================================
+       SECTION TAG
+       =========================================== */
+    .section-tag {
+      display: inline-block;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: #c41e3a;
+      margin-bottom: 14px;
+    }
+
+    /* ===========================================
+       COMPONENTS
+       =========================================== */
+    .card {
+      background: #fff;
+      border: 1px solid #e0d8d0;
+      border-radius: 4px;
+      padding: clamp(16px, 2.5vw, 28px);
+      box-shadow: 0 2px 16px rgba(0,0,0,0.05);
+    }
+    .card h3 { margin-bottom: 8px; color: #1a1a1a; }
+    .card p, .card li { font-size: clamp(0.75rem, 1.3vw, 0.9rem); }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: clamp(0.8rem, 2vw, 1.5rem); }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(0.8rem, 2vw, 1.5rem); }
+
+    .callout {
+      background: #c41e3a;
+      color: #fff;
+      border-radius: 4px;
+      padding: clamp(20px, 3vw, 36px);
+      text-align: center;
+      margin: clamp(1rem, 2.5vw, 2rem) 0;
+    }
+    .callout h3 { font-size: clamp(1.1rem, 2.5vw, 1.6rem); color: #fff; margin-bottom: 8px; }
+    .callout p { color: rgba(255,255,255,0.85); font-size: clamp(0.9rem, 1.8vw, 1.1rem); }
+    .callout.warm { background: linear-gradient(135deg, #8b5e3c, #a0714a); }
+    .callout.dark { background: #1a1a1a; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: clamp(0.75rem, 1.3vw, 0.9rem);
+      margin: 1rem 0;
+    }
+    th {
+      background: #c41e3a;
+      color: #fff;
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 700;
+      padding: 10px 16px;
+      text-align: left;
+      border-radius: 3px 3px 0 0;
+    }
+    td {
+      padding: 10px 16px;
+      border-bottom: 1px solid #e0d8d0;
+      color: #5a524a;
+      vertical-align: top;
+    }
+    tr:last-child td { border-bottom: none; }
+
+    .cmp-table td:first-child {
+      font-weight: 600;
+      color: #1a1a1a;
+      background: #f5e6d3;
+    }
+    .cmp-table td:last-child { color: #1a1a1a; font-weight: 500; }
+    .cmp-table td:nth-child(2) { color: #c41e3a; font-weight: 700; text-align: center; }
+
+    /* ===========================================
+       FLOW DIAGRAM
+       =========================================== */
+    .flow-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+    .flow-node {
+      background: #fff;
+      border: 1.5px solid #e0d8d0;
+      border-radius: 4px;
+      padding: clamp(14px, 2vw, 22px) clamp(20px, 3vw, 36px);
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    }
+    .flow-node.accent { background: #c41e3a; border-color: #c41e3a; }
+    .flow-node.accent h3, .flow-node.accent p { color: #fff !important; }
+    .flow-node h3 { font-size: clamp(1rem, 1.8vw, 1.2rem); margin-bottom: 4px; color: #1a1a1a; }
+    .flow-node p { font-size: clamp(0.75rem, 1.3vw, 0.9rem); }
+    .flow-arrow {
+      font-size: 18px;
+      color: #c41e3a;
+      line-height: 1;
+      padding: 6px 0;
+    }
+
+    /* ===========================================
+       STAT ROW
+       =========================================== */
+    .stat-row {
+      display: flex;
+      gap: clamp(0.8rem, 2vw, 1.5rem);
+      margin: clamp(1rem, 2.5vw, 2rem) 0;
+    }
+    .stat-item {
+      flex: 1;
+      background: #fff;
+      border: 1px solid #e0d8d0;
+      border-radius: 4px;
+      padding: clamp(16px, 2vw, 24px);
+      text-align: center;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    }
+    .stat-char {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(3rem, 7vw, 5rem);
+      font-weight: 700;
+      color: #c41e3a;
+      line-height: 1;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .stat-label {
+      font-family: 'DM Sans', sans-serif;
+      font-size: clamp(0.7rem, 1.2vw, 0.85rem);
+      color: #5a524a;
+      line-height: 1.5;
+    }
+
+    /* ===========================================
+       HERO SLIDE
+       =========================================== */
+    .slide-hero {
+      background: #faf9f7;
+      text-align: center;
+    }
+    .slide-hero .slide-content { text-align: center; align-items: center; }
+    .eyebrow {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #c41e3a;
+      margin-bottom: 16px;
+    }
+    .hero-sub {
+      font-family: 'Source Serif 4', serif;
+      font-size: clamp(1rem, 2vw, 1.3rem);
+      color: #5a524a;
+      font-style: italic;
+      margin-top: 16px;
+    }
+    .scroll-hint {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      color: #5a524a;
+      margin-top: 48px;
+      opacity: 0.5;
+    }
+
+    /* ===========================================
+       FOOTER SLIDE
+       =========================================== */
+    .slide-footer {
+      background: #1a1a1a;
+    }
+    .slide-footer h2 { color: #fff; font-size: clamp(1.8rem, 4vw, 3rem); }
+    .slide-footer p { color: rgba(255,255,255,0.5); font-size: clamp(0.9rem, 1.8vw, 1.1rem); margin-top: 12px; }
+
+    /* ===========================================
+       RESPONSIVE
+       =========================================== */
+    @media (max-width: 768px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .stat-row { flex-direction: column; }
+    }
+    @media (max-width: 600px) {
+      .lang-switch { top: 12px; right: 12px; }
+      .nav-dots { right: 10px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation-duration: 0.01ms !important; transition-duration: 0.2s !important; }
+      html { scroll-behavior: auto; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Fixed UI -->
+  <div class="lang-switch">
+    <button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" id="btn-zh" onclick="setLang('zh')">中文</button>
+  </div>
+  <div class="progress-bar" id="progress"></div>
+  <nav class="nav-dots" id="nav-dots"></nav>
+  <div class="keyboard-hint"><kbd>↑</kbd><kbd>↓</kbd> or <kbd>Space</kbd></div>
+
+  <!-- ═══ SLIDE 01 — HERO ═══ -->
+  <section class="slide slide-hero" id="s01">
+    <div class="slide-content">
+      <div class="eyebrow" data-i18n="eyebrow">Team Management · AI-Driven</div>
+      <h1 data-i18n="hero-title">AI-Assisted<br>Team Management</h1>
+      <p class="hero-sub" data-i18n="hero-sub">The Four-Stage Closed-Loop Framework</p>
+      <div class="scroll-hint" data-i18n="scroll-hint">↓ Scroll or press arrow keys</div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 02 — PROBLEM ═══ -->
+  <section class="slide" id="s02">
+    <div class="slide-content">
+      <div class="section-tag" data-i18n="tag-01">Part 01</div>
+      <h2 data-i18n="p2-title">The Core Problem</h2>
+      <div class="callout">
+        <h3 data-i18n="p2-callout">The hardest part of management:<br>not doing the work — but chasing others to do it.</h3>
+      </div>
+      <div class="grid-3">
+        <div class="card">
+          <h3 data-i18n="p2-morning">Morning</h3>
+          <p data-i18n="p2-morning-p">"What's the status on all projects?" — sent to the whole group</p>
+        </div>
+        <div class="card">
+          <h3 data-i18n="p2-afternoon">Afternoon</h3>
+          <p data-i18n="p2-afternoon-p">"Has X finished yet?" — sent again, individually</p>
+        </div>
+        <div class="card">
+          <h3 data-i18n="p2-reactive">Reactive</h3>
+          <p data-i18n="p2-reactive-p">Client escalates before you even know something broke</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 03 — LOOP ═══ -->
+  <section class="slide" id="s03">
+    <div class="slide-content">
+      <div class="section-tag" data-i18n="tag-02">Part 02</div>
+      <h2 data-i18n="p3-title">Solution: The Four-Stage Loop</h2>
+      <p style="margin-bottom:1.5rem;max-width:600px;" data-i18n="p3-sub">AI does three things: <strong>Collect → Judge → Act.</strong> Everything else is automated.</p>
+      <div class="flow-wrap">
+        <div class="flow-node">
+          <h3 data-i18n="f1-title">① Task Intake</h3>
+          <p data-i18n="f1-desc">Manager enters tasks — who does what, by when</p>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-node">
+          <h3 data-i18n="f2-title">② Verification</h3>
+          <p data-i18n="f2-desc">AI polls data sources, assesses task status</p>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-node accent">
+          <h3 data-i18n="f3-title">③ Tracking</h3>
+          <p data-i18n="f3-desc">Stalled? → AI nudges the owner automatically</p>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-node">
+          <h3 data-i18n="f4-title">④ Completion</h3>
+          <p data-i18n="f4-desc">Done → logged, AI briefs the manager</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 04 — SOURCES ═══ -->
+  <section class="slide" id="s04">
+    <div class="slide-content">
+      <div class="section-tag" data-i18n="tag-03">Part 03 · Task Intake</div>
+      <h2 data-i18n="p4-title">Where tasks come from</h2>
+      <p style="margin-bottom:1.5rem;" data-i18n="p4-sub">AI extracts tasks automatically from daily communication. No manual entry needed.</p>
+      <table>
+        <thead>
+          <tr>
+            <th data-i18n="t-col1">Source</th>
+            <th data-i18n="t-col2">Tool</th>
+            <th data-i18n="t-col3">What AI extracts</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td data-i18n="t1-src">Meeting notes</td>
+            <td>Google Calendar + Meet</td>
+            <td data-i18n="t1-ext">Agenda, outcomes, action items (owner + content + deadline)</td>
+          </tr>
+          <tr>
+            <td data-i18n="t2-src">Chat threads</td>
+            <td>Google Chat</td>
+            <td data-i18n="t2-ext">Task keywords ("I'll handle", "by Friday", "assign to")</td>
+          </tr>
+          <tr>
+            <td data-i18n="t3-src">Email</td>
+            <td>Gmail</td>
+            <td data-i18n="t3-ext">Sender, subject, task directives ("Please...", "Need by...")</td>
+          </tr>
+          <tr>
+            <td data-i18n="t4-src">Doc comments</td>
+            <td>Google Docs / Sheets</td>
+            <td data-i18n="t4-ext">@mentions, comment-based tasks</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 05 — AI PROCESS ═══ -->
+  <section class="slide" id="s05">
+    <div class="slide-content">
+      <div class="section-tag" data-i18n="tag-03b">Part 03 · Task Intake</div>
+      <h2 data-i18n="p5-title">What AI does</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3 data-i18n="p5-s1">① Sync regularly</h3>
+          <p data-i18n="p5-s1-p">Google Calendar API · Gmail API · Google Chat API — polled on schedule</p>
+        </div>
+        <div class="card">
+          <h3 data-i18n="p5-s2">② Extract tasks</h3>
+          <p data-i18n="p5-s2-p">LLM parses: owner, content, deadline, delivery criteria</p>
+        </div>
+        <div class="card">
+          <h3 data-i18n="p5-s3">③ Write to task pool</h3>
+          <p data-i18n="p5-s3-p">Google Sheets · Notion · Airtable — grouped by owner</p>
+        </div>
+        <div class="card">
+          <h3 data-i18n="p5-s4">④ Detect conflicts</h3>
+          <p data-i18n="p5-s4-p">Same owner + same deadline = overlapping tasks flagged</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 06 — VERIFICATION ═══ -->
+  <section class="slide" id="s06">
+    <div class="slide-content">
+      <div class="section-tag" data-i18n="tag-04">Part 04 · Verification</div>
+      <h2 data-i18n="p6-title">Objective checks, no awkwardness</h2>
+      <p style="margin-bottom:1.5rem;" data-i18n="p6-sub">AI reads task status + cross-checks data sources. Far more objective than a human.</p>
+      <div class="grid-3">
+        <div class="card">
+          <h3 data-i18n="p6-c1">24h before deadline</h3>
+          <p data-i18n="p6-c1-p">Any clear progress made?</p>
+        </div>
+        <div class="card">
+          <h3 data-i18n="p6-c2">On deadline day</h3>
+          <p data-i18n="p6-c2-p">Will it ship on time?</p>
+        </div>
+        <div class="card">
+          <h3 data-i18n="p6-c3">Overdue</h3>
+          <p data-i18n="p6-c3-p">Is it still being actively worked on?</p>
+        </div>
+      </div>
+      <div class="callout warm" style="margin-top:1.5rem;">
+        <h3 data-i18n="p6-callout">AI is more objective than humans</h3>
+        <p data-i18n="p6-callout-p">It won't skip the nudge because it feels "awkward"</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 07 — TRACKING ═══ -->
+  <section class="slide" id="s07">
+    <div class="slide-content">
+      <div class="section-tag" data-i18n="tag-05">Part 05 · Tracking</div>
+      <h2 data-i18n="p7-title">Stalled? AI sends the nudge</h2>
+      <p style="margin-bottom:1.5rem;" data-i18n="p7-sub">AI messages the owner automatically — no manager involvement needed.</p>
+      <div class="grid-2">
+        <div class="card">
+          <h3 data-i18n="p7-triggers">Triggers</h3>
+          <ul>
+            <li data-i18n="p7-t1">Progress stalled X hours before deadline</li>
+            <li data-i18n="p7-t2">Overdue without any update</li>
+            <li data-i18n="p7-t3">Key milestone silently ignored</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 data-i18n="p7-channels">Channels</h3>
+          <ul>
+            <li>Google Chat @owner</li>
+            <li>Gmail / email</li>
+            <li data-i18n="p7-c3">WhatsApp · SMS</li>
+          </ul>
+        </div>
+      </div>
+      <div class="callout" style="margin-top:1.5rem;">
+        <h3 data-i18n="p7-callout">Immediate effect</h3>
+        <p data-i18n="p7-callout-p">Owners know someone's watching. Accountability and urgency spike naturally.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 08 — COMPLETION ═══ -->
+  <section class="slide" id="s08">
+    <div class="slide-content">
+      <div class="section-tag" data-i18n="tag-06">Part 06 · Completion</div>
+      <h2 data-i18n="p8-title">Done? AI logs and reports</h2>
+      <p style="margin-bottom:1.5rem;" data-i18n="p8-sub">Automatic record + manager briefing when a task is marked complete.</p>
+      <div class="card" style="margin-bottom:1.5rem;">
+        <h3 data-i18n="p8-report">Report includes</h3>
+        <ul>
+          <li data-i18n="p8-r1"><strong>Task name</strong> + owner</li>
+          <li data-i18n="p8-r2"><strong>Planned deadline</strong> vs <strong>actual completion</strong></li>
+          <li data-i18n="p8-r3"><strong>Delay flag</strong> + reason if overdue</li>
+          <li data-i18n="p8-r4">Format: one-liner · daily digest · weekly report</li>
+        </ul>
+      </div>
+      <div class="callout">
+        <h3 data-i18n="p8-callout">Manager's day, transformed</h3>
+        <p data-i18n="p8-callout-p">From "chasing people" → "reading AI summaries"</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 09 — THREE ACTIONS ═══ -->
+  <section class="slide" id="s09">
+    <div class="slide-content">
+      <div class="section-tag" data-i18n="tag-07">Part 07</div>
+      <h2 data-i18n="p9-title">AI: Three core actions</h2>
+      <div class="stat-row">
+        <div class="stat-item">
+          <span class="stat-char" data-i18n="sa1">C</span>
+          <span class="stat-label" data-i18n="sa1-lbl"><strong>Collect</strong><br>Poll tasks, emails, chats, docs</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-char" data-i18n="sa2">J</span>
+          <span class="stat-label" data-i18n="sa2-lbl"><strong>Judge</strong><br>Progress, stalls, risks</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-char" data-i18n="sa3">A</span>
+          <span class="stat-label" data-i18n="sa3-lbl"><strong>Act</strong><br>Nudge if stalled, report if done</span>
+        </div>
+      </div>
+      <div class="callout dark">
+        <p data-i18n="p9-callout" style="color:#fff;">When these three work together, a manager's time is reclaimed.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 10 — RESULT ═══ -->
+  <section class="slide" id="s10">
+    <div class="slide-content">
+      <div class="section-tag" data-i18n="tag-08">Part 08</div>
+      <h2 data-i18n="p10-title">The Result</h2>
+      <div class="cmp-table">
+        <table>
+          <thead>
+            <tr>
+              <th data-i18n="th-before">Before</th>
+              <th></th>
+              <th data-i18n="th-after">After</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td data-i18n="b1-b">Get status updates by asking</td>
+              <td>→</td>
+              <td data-i18n="b1-a">Read AI summary</td>
+            </tr>
+            <tr>
+              <td data-i18n="b2-b">Learn about problems reactively</td>
+              <td>→</td>
+              <td data-i18n="b2-a">AI alerts you in advance</td>
+            </tr>
+            <tr>
+              <td data-i18n="b3-b">Send chase messages all day</td>
+              <td>→</td>
+              <td data-i18n="b3-a">AI handles it, you step in only when needed</td>
+            </tr>
+            <tr>
+              <td data-i18n="b4-b">No visibility into team workload</td>
+              <td>→</td>
+              <td data-i18n="b4-a">Real-time visual tracking</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout" style="margin-top:1.5rem;">
+        <h3 data-i18n="p10-callout">From "chasing people" → "reading AI reports"</h3>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 11 — TOOLS ═══ -->
+  <section class="slide" id="s11">
+    <div class="slide-content">
+      <div class="section-tag" data-i18n="tag-09">Part 09</div>
+      <h2 data-i18n="p11-title">Tool-agnostic framework</h2>
+      <p style="margin-bottom:1.5rem;" data-i18n="p11-sub">The framework is universal — pick tools that match your actual environment.</p>
+      <table>
+        <thead>
+          <tr>
+            <th data-i18n="env-col">Environment</th>
+            <th data-i18n="tool-col">Recommended stack</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td data-i18n="e1">Google Workspace (international)</td>
+            <td>Calendar · Chat · Gmail · Sheets</td>
+          </tr>
+          <tr>
+            <td data-i18n="e2">Feishu / DingTalk (China)</td>
+            <td data-i18n="e2-tools">Feishu Bitable + bot · DingTalk</td>
+          </tr>
+          <tr>
+            <td data-i18n="e3">WhatsApp region</td>
+            <td>WhatsApp Business API · Sheets</td>
+          </tr>
+          <tr>
+            <td data-i18n="e4">Simple setup</td>
+            <td>Shared sheet · Zapier · email</td>
+          </tr>
+          <tr>
+            <td data-i18n="e5">Full automation</td>
+            <td>n8n · Make · Notion · bot</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 12 — ADVICE ═══ -->
+  <section class="slide" id="s12">
+    <div class="slide-content">
+      <div class="section-tag" data-i18n="tag-10">Part 10</div>
+      <h2 data-i18n="p12-title">Getting started</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3 data-i18n="a1-title">① Run the smallest loop first</h3>
+          <p data-i18n="a1-p">One project, one task line. Validate the concept before scaling.</p>
+        </div>
+        <div class="card">
+          <h3 data-i18n="a2-title">② Tell your team</h3>
+          <p data-i18n="a2-p">Be transparent: "AI is helping me track progress." Reduces resistance.</p>
+        </div>
+        <div class="card">
+          <h3 data-i18n="a3-title">③ Start with Tracking</h3>
+          <p data-i18n="a3-p">If resources are limited: implement "auto-nudge on overdue" first. Biggest impact.</p>
+        </div>
+        <div class="card">
+          <h3 data-i18n="a4-title">④ Data quality = outcome</h3>
+          <p data-i18n="a4-p">More specific task entry = more accurate AI judgment.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 13 — PREREQS ═══ -->
+  <section class="slide" id="s13">
+    <div class="slide-content">
+      <div class="section-tag" data-i18n="tag-11">Part 11</div>
+      <h2 data-i18n="p13-title">Prerequisites</h2>
+      <div class="grid-3" style="margin-bottom:1.5rem;">
+        <div class="card"><h3 data-i18n="pr1">✓ Clear owners + deadlines</h3></div>
+        <div class="card">
+          <h3 data-i18n="pr2">✓ A readable data source</h3>
+          <p data-i18n="pr2-p">Sheet, email, or chat history that AI can access</p>
+        </div>
+        <div class="card"><h3 data-i18n="pr3">✓ Manager willing to let AI send nudges</h3></div>
+      </div>
+      <div class="callout">
+        <h3 data-i18n="prereq-title">All three met? This framework runs.</h3>
+        <p data-i18n="prereq-sub">For small-to-medium teams where tasks are distributed, owners are many, and managers' time is stretched.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 14 — FOOTER ═══ -->
+  <section class="slide slide-footer" id="s14">
+    <div class="slide-content" style="text-align:center;">
+      <h2 data-i18n="footer-title">Ready to run the loop?</h2>
+      <p data-i18n="footer-sub">From "chasing people" → "reading AI reports"</p>
+    </div>
+  </section>
+
+  <!-- ═══ JAVASCRIPT ═══ -->
+  <script>
+    /* =========================================
+       I18N DICTIONARY
+       ========================================= */
+    const T = {
+      en: {
+        "eyebrow": "Team Management · AI-Driven",
+        "hero-title": "AI-Assisted\nTeam Management",
+        "hero-sub": "The Four-Stage Closed-Loop Framework",
+        "scroll-hint": "↓ Scroll or press arrow keys",
+        "tag-01": "Part 01", "tag-02": "Part 02", "tag-03": "Part 03 · Task Intake",
+        "tag-03b": "Part 03 · Task Intake", "tag-04": "Part 04 · Verification",
+        "tag-05": "Part 05 · Tracking", "tag-06": "Part 06 · Completion",
+        "tag-07": "Part 07", "tag-08": "Part 08", "tag-09": "Part 09",
+        "tag-10": "Part 10", "tag-11": "Part 11",
+        "p2-title": "The Core Problem",
+        "p2-callout": "The hardest part of management:\nnot doing the work — but chasing others to do it.",
+        "p2-morning": "Morning",
+        "p2-morning-p": "\"What's the status on all projects?\" — sent to the whole group",
+        "p2-afternoon": "Afternoon",
+        "p2-afternoon-p": "\"Has X finished yet?\" — sent again, individually",
+        "p2-reactive": "Reactive",
+        "p2-reactive-p": "Client escalates before you even know something broke",
+        "p3-title": "Solution: The Four-Stage Loop",
+        "p3-sub": "AI does three things: <strong>Collect → Judge → Act.</strong> Everything else is automated.",
+        "f1-title": "① Task Intake", "f1-desc": "Manager enters tasks — who does what, by when",
+        "f2-title": "② Verification", "f2-desc": "AI polls data sources, assesses task status",
+        "f3-title": "③ Tracking", "f3-desc": "Stalled? → AI nudges the owner automatically",
+        "f4-title": "④ Completion", "f4-desc": "Done → logged, AI briefs the manager",
+        "p4-title": "Where tasks come from",
+        "p4-sub": "AI extracts tasks automatically from daily communication. No manual entry needed.",
+        "t-col1": "Source", "t-col2": "Tool", "t-col3": "What AI extracts",
+        "t1-src": "Meeting notes", "t1-ext": "Agenda, outcomes, action items (owner + content + deadline)",
+        "t2-src": "Chat threads", "t2-ext": "Task keywords (\"I'll handle\", \"by Friday\", \"assign to\")",
+        "t3-src": "Email", "t3-ext": "Sender, subject, task directives (\"Please...\", \"Need by...\")",
+        "t4-src": "Doc comments", "t4-ext": "@mentions, comment-based tasks",
+        "p5-title": "What AI does",
+        "p5-s1": "① Sync regularly", "p5-s1-p": "Google Calendar API · Gmail API · Google Chat API — polled on schedule",
+        "p5-s2": "② Extract tasks", "p5-s2-p": "LLM parses: owner, content, deadline, delivery criteria",
+        "p5-s3": "③ Write to task pool", "p5-s3-p": "Google Sheets · Notion · Airtable — grouped by owner",
+        "p5-s4": "④ Detect conflicts", "p5-s4-p": "Same owner + same deadline = overlapping tasks flagged",
+        "p6-title": "Objective checks, no awkwardness",
+        "p6-sub": "AI reads task status + cross-checks data sources. Far more objective than a human.",
+        "p6-c1": "24h before deadline", "p6-c1-p": "Any clear progress made?",
+        "p6-c2": "On deadline day", "p6-c2-p": "Will it ship on time?",
+        "p6-c3": "Overdue", "p6-c3-p": "Is it still being actively worked on?",
+        "p6-callout": "AI is more objective than humans",
+        "p6-callout-p": "It won't skip the nudge because it feels \"awkward\"",
+        "p7-title": "Stalled? AI sends the nudge",
+        "p7-sub": "AI messages the owner automatically — no manager involvement needed.",
+        "p7-triggers": "Triggers",
+        "p7-t1": "Progress stalled X hours before deadline",
+        "p7-t2": "Overdue without any update",
+        "p7-t3": "Key milestone silently ignored",
+        "p7-channels": "Channels",
+        "p7-c3": "WhatsApp · SMS",
+        "p7-callout": "Immediate effect",
+        "p7-callout-p": "Owners know someone's watching. Accountability and urgency spike naturally.",
+        "p8-title": "Done? AI logs and reports",
+        "p8-sub": "Automatic record + manager briefing when a task is marked complete.",
+        "p8-report": "Report includes",
+        "p8-r1": "<strong>Task name</strong> + owner",
+        "p8-r2": "<strong>Planned deadline</strong> vs <strong>actual completion</strong>",
+        "p8-r3": "<strong>Delay flag</strong> + reason if overdue",
+        "p8-r4": "Format: one-liner · daily digest · weekly report",
+        "p8-callout": "Manager's day, transformed",
+        "p8-callout-p": "From \"chasing people\" → \"reading AI summaries\"",
+        "p9-title": "AI: Three core actions",
+        "sa1": "C", "sa1-lbl": "<strong>Collect</strong><br>Poll tasks, emails, chats, docs",
+        "sa2": "J", "sa2-lbl": "<strong>Judge</strong><br>Progress, stalls, risks",
+        "sa3": "A", "sa3-lbl": "<strong>Act</strong><br>Nudge if stalled, report if done",
+        "p9-callout": "When these three work together, a manager's time is reclaimed.",
+        "p10-title": "The Result",
+        "th-before": "Before", "th-after": "After",
+        "b1-b": "Get status updates by asking", "b1-a": "Read AI summary",
+        "b2-b": "Learn about problems reactively", "b2-a": "AI alerts you in advance",
+        "b3-b": "Send chase messages all day", "b3-a": "AI handles it, you step in only when needed",
+        "b4-b": "No visibility into team workload", "b4-a": "Real-time visual tracking",
+        "p10-callout": "From \"chasing people\" → \"reading AI reports\"",
+        "p11-title": "Tool-agnostic framework",
+        "p11-sub": "The framework is universal — pick tools that match your actual environment.",
+        "env-col": "Environment", "tool-col": "Recommended stack",
+        "e1": "Google Workspace (international)", "e2": "Feishu / DingTalk (China)",
+        "e2-tools": "Feishu Bitable + bot · DingTalk",
+        "e3": "WhatsApp region", "e4": "Simple setup", "e5": "Full automation",
+        "p12-title": "Getting started",
+        "a1-title": "① Run the smallest loop first",
+        "a1-p": "One project, one task line. Validate the concept before scaling.",
+        "a2-title": "② Tell your team",
+        "a2-p": "Be transparent: \"AI is helping me track progress.\" Reduces resistance.",
+        "a3-title": "③ Start with Tracking",
+        "a3-p": "If resources are limited: implement \"auto-nudge on overdue\" first. Biggest impact.",
+        "a4-title": "④ Data quality = outcome",
+        "a4-p": "More specific task entry = more accurate AI judgment.",
+        "p13-title": "Prerequisites",
+        "pr1": "✓ Clear owners + deadlines",
+        "pr2": "✓ A readable data source",
+        "pr2-p": "Sheet, email, or chat history that AI can access",
+        "pr3": "✓ Manager willing to let AI send nudges",
+        "prereq-title": "All three met? This framework runs.",
+        "prereq-sub": "For small-to-medium teams where tasks are distributed, owners are many, and managers' time is stretched.",
+        "footer-title": "Ready to run the loop?",
+        "footer-sub": "From \"chasing people\" → \"reading AI reports\""
+      },
+      zh: {
+        "eyebrow": "团队管理 · AI 驱动",
+        "hero-title": "AI 辅助\n团队管理",
+        "hero-sub": "四端闭环框架",
+        "scroll-hint": "↓ 滚动或按方向键浏览",
+        "tag-01": "第一部分", "tag-02": "第二部分",
+        "tag-03": "第三部分 · 任务分配端", "tag-03b": "第三部分 · 任务分配端",
+        "tag-04": "第四部分 · 检验端", "tag-05": "第五部分 · 追踪端",
+        "tag-06": "第六部分 · 完成端", "tag-07": "第七部分",
+        "tag-08": "第八部分", "tag-09": "第九部分",
+        "tag-10": "第十部分", "tag-11": "第十一部分",
+        "p2-title": "核心问题",
+        "p2-callout": "管理者最累的事：\n不是自己做，是盯着别人做。",
+        "p2-morning": "早上",
+        "p2-morning-p": "\"各项目进展怎么样了？\" — 群发",
+        "p2-afternoon": "下午",
+        "p2-afternoon-p": "\"那个做好没？\" — 再次单独催促",
+        "p2-reactive": "被动",
+        "p2-reactive-p": "客户催了才知道有人卡住了",
+        "p3-title": "解决思路：四端闭环",
+        "p3-sub": "AI 只做三件事：<strong>采集 → 判断 → 行动</strong>。其他全部自动化。",
+        "f1-title": "① 任务分配端", "f1-desc": "管理者录入任务（谁负责、做什么、截止时间）",
+        "f2-title": "② 检验端", "f2-desc": "AI 定时采集数据源，判断任务状态",
+        "f3-title": "③ 追踪端", "f3-desc": "没动静 → AI 自动发消息催",
+        "f4-title": "④ 完成端", "f4-desc": "完成了 → 记录 + AI 汇报给管理者",
+        "p4-title": "数据从哪里来？",
+        "p4-sub": "AI 自动从沟通工具中提取任务，无需人工录入。",
+        "t-col1": "来源", "t-col2": "工具", "t-col3": "提取内容",
+        "t1-src": "会议纪要", "t1-ext": "议题、结论、待办（负责人+内容+截止）",
+        "t2-src": "群聊", "t2-ext": "任务关键词（\"我负责\"、\"周五前\"、\"分配给\"）",
+        "t3-src": "邮件", "t3-ext": "发件人、主题、任务指示",
+        "t4-src": "文档评论", "t4-ext": "@任务、评论区任务",
+        "p5-title": "AI 做什么？",
+        "p5-s1": "① 定时读取", "p5-s1-p": "Google Calendar API · Gmail API · Google Chat API 自动同步",
+        "p5-s2": "② 提取任务", "p5-s2-p": "LLM 解析结构化任务（负责人、内容、截止时间、交付标准）",
+        "p5-s3": "③ 写入任务池", "p5-s3-p": "Google Sheets · Notion · Airtable，按负责人聚合",
+        "p5-s4": "④ 冲突检测", "p5-s4-p": "同一负责人同一截止时间是否有多条任务？",
+        "p6-title": "客观检验，不留情面",
+        "p6-sub": "AI 定时读取任务状态，同时采集相关数据源做交叉验证。",
+        "p6-c1": "截止前 24 小时", "p6-c1-p": "是否有明确进展？",
+        "p6-c2": "截止时间当天", "p6-c2-p": "是否能准时交付？",
+        "p6-c3": "已超时", "p6-c3-p": "是否还在推进？",
+        "p6-callout": "AI 比人更客观",
+        "p6-callout-p": "不会因为\"不好意思催\"就跳过",
+        "p7-title": "卡住了，AI 自动催",
+        "p7-sub": "AI 发现任务卡住，自动发消息给负责人，无需管理者介入。",
+        "p7-triggers": "触发条件",
+        "p7-t1": "截止时间前 X 小时，进展停滞",
+        "p7-t2": "超时未完成", "p7-t3": "关键节点无回应",
+        "p7-channels": "通知方式",
+        "p7-c3": "WhatsApp · 短信",
+        "p7-callout": "效果立竿见影",
+        "p7-callout-p": "负责人知道\"有人在盯着\"，主动性和紧迫感明显提升",
+        "p8-title": "完成了，AI 自动汇报",
+        "p8-sub": "任务完成后，AI 自动记录并汇报给管理者。",
+        "p8-report": "汇报内容",
+        "p8-r1": "<strong>任务名称</strong> + 负责人",
+        "p8-r2": "<strong>原定截止时间</strong> vs <strong>实际完成时间</strong>",
+        "p8-r3": "<strong>延误</strong> + 原因（如果有）",
+        "p8-r4": "形式：一句话 · 每日汇总 · 周报",
+        "p8-callout": "管理者的一天，从此不同",
+        "p8-callout-p": "从\"追着人问\"变成\"每天看 AI 整理的报表\"",
+        "p9-title": "AI 三个核心动作",
+        "sa1": "采", "sa1-lbl": "<strong>采集</strong><br>定时读取任务、数据源",
+        "sa2": "判", "sa2-lbl": "<strong>判断</strong><br>任务进行到哪、是否卡住",
+        "sa3": "动", "sa3-lbl": "<strong>行动</strong><br>卡住了就追、完成了就报",
+        "p9-callout": "三件事做好，管理者的时间就解放了。",
+        "p10-title": "最终效果",
+        "th-before": "之前", "th-after": "之后",
+        "b1-b": "群发消息逐个问", "b1-a": "看 AI 整理的报表",
+        "b2-b": "客户催了才知道", "b2-a": "AI 自动提前预警",
+        "b3-b": "大量催进度消息", "b3-a": "AI 处理，必要时才介入",
+        "b4-b": "不知道谁在干什么", "b4-a": "实时可视化追踪",
+        "p10-callout": "从\"追着人问\"变成\"看 AI 汇总报表\"",
+        "p11-title": "工具适配思路",
+        "p11-sub": "框架是通用的，工具按实际情况选。",
+        "env-col": "环境", "tool-col": "建议工具",
+        "e1": "Google Workspace（国外）", "e2": "国内（飞书/钉钉区）",
+        "e2-tools": "飞书多维表格 + 机器人 / 钉钉",
+        "e3": "WhatsApp 区", "e4": "追求简单", "e5": "追求完整",
+        "p12-title": "落地建议",
+        "a1-title": "① 先跑通最小闭环",
+        "a1-p": "用一个项目、一条任务线试验，先验证思路对不对",
+        "a2-title": "② 让团队知道",
+        "a2-p": "透明告知\"有 AI 在协助跟进\"，减少抵触",
+        "a3-title": "③ 从追踪端开始",
+        "a3-p": "先做\"超时自动催\"这一件事，效果最明显",
+        "a4-title": "④ 数据质量决定效果",
+        "a4-p": "任务录入越具体，AI 判断越准确",
+        "p13-title": "适用前提",
+        "pr1": "✓ 任务有明确负责人和截止时间",
+        "pr2": "✓ 至少有一个数据源 AI 能读到",
+        "pr2-p": "表格 / 邮件 / 聊天记录",
+        "pr3": "✓ 管理者愿意授权 AI 自动发消息催人",
+        "prereq-title": "三个条件基本满足，这套框架就能跑起来",
+        "prereq-sub": "适合中小团队管理场景 — 任务分散、负责人多、管理者时间有限。",
+        "footer-title": "准备跑通这个闭环？",
+        "footer-sub": "从\"追着人问\"变成\"看 AI 汇总报表\""
+      }
+    };
+
+    /* =========================================
+       LANGUAGE SWITCHER
+       ========================================= */
+    let currentLang = 'en';
+
+    function setLang(lang) {
+      currentLang = lang;
+      document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+      document.getElementById('btn-zh').classList.toggle('active', lang === 'zh');
+      document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (T[lang][key]) {
+          el.innerHTML = T[lang][key].replace(/\n/g, '<br>');
+        }
+      });
+    }
+
+    /* =========================================
+       SCROLL ENGINE
+       ========================================= */
+    const slides = document.querySelectorAll('.slide');
+    const total = slides.length;
+
+    // Build nav dots
+    const dotsNav = document.getElementById('nav-dots');
+    slides.forEach((_, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'nav-dot' + (i === 0 ? ' active' : '');
+      btn.setAttribute('aria-label', 'Slide ' + (i + 1));
+      btn.onclick = () => slides[i].scrollIntoView({ behavior: 'smooth' });
+      dotsNav.appendChild(btn);
+    });
+
+    // Update current slide + progress
+    function update() {
+      const scrollY = window.scrollY;
+      const winH = window.innerHeight;
+      let current = 0;
+
+      slides.forEach((slide, i) => {
+        const top = slide.offsetTop;
+        if (scrollY >= top - winH * 0.4) {
+          current = i;
+        }
+      });
+
+      // Progress
+      const pct = ((current + 1) / total) * 100;
+      document.getElementById('progress').style.width = pct + '%';
+
+      // Dots
+      document.querySelectorAll('.nav-dot').forEach((dot, i) => {
+        dot.classList.toggle('active', i === current);
+      });
+    }
+
+    window.addEventListener('scroll', update, { passive: true });
+    update(); // init
+
+    // Keyboard navigation
+    document.addEventListener('keydown', e => {
+      const scrollY = window.scrollY;
+      let target = 0;
+
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        // Find current slide
+        let current = 0;
+        slides.forEach((slide, i) => {
+          if (scrollY >= slide.offsetTop - window.innerHeight * 0.5) current = i;
+        });
+        target = Math.min(current + 1, total - 1);
+        slides[target].scrollIntoView({ behavior: 'smooth' });
+      } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        let current = 0;
+        slides.forEach((slide, i) => {
+          if (scrollY >= slide.offsetTop - window.innerHeight * 0.5) current = i;
+        });
+        target = Math.max(current - 1, 0);
+        slides[target].scrollIntoView({ behavior: 'smooth' });
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        slides[0].scrollIntoView({ behavior: 'smooth' });
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        slides[total - 1].scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+
+    // Touch swipe
+    let touchStartY = 0;
+    document.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; }, { passive: true });
+    document.addEventListener('touchend', e => {
+      const diff = touchStartY - e.changedTouches[0].clientY;
+      if (Math.abs(diff) < 60) return;
+      let current = 0;
+      slides.forEach((slide, i) => {
+        if (window.scrollY >= slide.offsetTop - window.innerHeight * 0.5) current = i;
+      });
+      const next = diff > 0 ? current + 1 : current - 1;
+      if (next >= 0 && next < total) {
+        slides[next].scrollIntoView({ behavior: 'smooth' });
+      }
+    }, { passive: true });
+  </script>
+</body>
+</html>
